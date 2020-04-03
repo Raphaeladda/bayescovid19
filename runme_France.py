@@ -71,7 +71,7 @@ def run(load_results = False):
             with open('results_France.sav', 'wb') as results_file:
                 pickle.dump(results, results_file)
 
-        return config, model, data, sampler
+    return config, model, data, sampler
 
 ## Post-processing
 if __name__ == '__main__':

@@ -33,8 +33,8 @@ def run(config, theta0):
     print('Build model...')
     model = init_model(config, data, theta0)
 
-    print('Infer std of observations from the model...')
-    data, theta1 = infer_sigma_obs(config, data, model)
+    print('... finding a best fit by maximum a posteriori estimation...')
+    theta1 = map_estimation(config, data, model)
 
     print('Run MCMC...')
     sampler = run_mcmc_emcee(theta1, data, model, config)
@@ -65,85 +65,6 @@ def init_model(config, data, theta0):
         plt.show()
 
     return model
-
-
-def infer_sigma_obs(config, data, model):
-    '''
-    A 2-step (quite ugly) procedure to set the values of the
-    standard deviation of the observations wrt the model, which is
-    large at the begining of the epidemic and sould be smaller when
-    the number of fatalities increases
-    '''
-    
-    sigma = np.zeros([data.shape[0]])
-
-    # Step 1: rough guess
-    n_ranges = [[1, 10], [10, 100], [100, 1000], [1000, 5000], [5000, 10000], [10000, 50000]]
-    t = np.arange(data.shape[0])
-
-    method = 'piecewise_linear'
-    if method == 'piecewise_linear':
-        sigma_obs_factor1 = config['sigma_obs_factor1']
-
-        for i in range(len(n_ranges)):
-            n_min = n_ranges[i][0]
-            n_max = n_ranges[i][1]
-
-            idx = data['yobs'].between(n_min, n_max)
-
-            tobs = t[idx].reshape(-1)
-            yobs_log = np.log10(data['yobs'][idx].values.reshape(-1))
-
-            try:
-                slope, intercept, r_value, p_value, std_err = stats.linregress(tobs, yobs_log)
-                ypred_log = intercept + slope * tobs
-
-                std_err = np.std(yobs_log - ypred_log)
-                sigma[idx] = sigma_obs_factor1 * std_err
-            except ValueError:
-                print("Oops!  There were no valid data for linear regression... anyway...")
-
-    data['sigma'] = sigma
-
-    # Step 2: better estimate using a MAP estimation of the parameters of the model?
-    sigma_obs_factor2 = config['sigma_obs_factor2']
-
-    # MAP
-    print('... finding a best fit by maxmimum a posteriori estimation...')
-    theta1 = map_estimation(config, data, model)
-    model.simulate(theta1)
-    ypred = model.y_from_tobs()
-
-    # Find a (pessimistic)  model for sigma
-    print('... finding a model for sigmaobs...')
-    sigma = np.zeros([data.shape[0]])
-    
-    idx = data['yobs'].between(1, 1e5)
-    yobs_log = np.log10(data['yobs'][idx].values.reshape(-1))
-    ypred_log = np.log10(ypred[idx])
-    s2log10 = np.log10((yobs_log - ypred_log) ** 2)
-    tt = np.arange(s2log10.shape[0])
-    f = lambda x: np.mean( (x[0] * tt + x[1] - s2log10)**2 )
-    g = lambda x: np.min(x[0] * tt + x[1] - s2log10)
-    con = {'type': 'ineq', 'fun': g}
-    x0 = [0, -1]
-    soln = minimize(f, x0, method='SLSQP', constraints=con)
-    x_opt = soln.x
-    s2log10up = x_opt[0] * tt + x_opt[1]
-
-    sigma[idx] = np.sqrt(np.power(10, s2log10up))
-
-    if config['debug']:
-        print(x_opt)
-        print(np.max(s2log10 - x_opt[0] * tt - x_opt[1]))
-        plt.plot(tt, s2log10, 'o', tt, s2log10up)
-        plt.show()
-        plt.plot(tt, yobs_log - ypred_log, 'o', tt, sigma[idx])
-        plt.show()
-        
-    data['sigma'] = sigma
-
-    return data, theta1
 
 
 def run_mcmc_emcee(theta0, data, model, config):
@@ -214,7 +135,22 @@ def map_estimation(config, data, model):
     if config['debug']:
         print(theta_MAP)
         model.simulate(theta_MAP)
-        model.plot_with_obs(data['yobs'].values)
+        #model.plot_with_obs(data['yobs'].values)
+
+        fig, ax = plt.subplots()
+        plt.xlabel('Time (days)')
+        plt.ylabel(r'$\log_{10}(y(t))$')
+
+        idx = data['yobs'].gt(0)      
+        tobs = np.array(model.tobs_rel)[idx]
+        yobs = data['yobs'][idx]
+        
+        plt.semilogy(model.t, model.x[:, 2], label='Prediction', color='C4', alpha= 1)
+        plt.semilogy(model.t, model.x[:, 4], label='Prediction', color='C7', alpha= 1)
+        plt.semilogy(tobs, yobs, label='Observed', linestyle='dashed', marker='o', color='C1')
+        plt.semilogy(model.t, np.maximum(1e-1, model.x[:, 4] - 2*np.sqrt(model.x[:, 4])), '--', color='k', alpha=0.3)
+        plt.semilogy(model.t, model.x[:, 4] + 2*np.sqrt(model.x[:, 4]) , '--', color='k', alpha=0.3)
+
         v = ["%.3f" % theta_MAP[i] for i in range(theta_MAP.shape[0])]
         title = 'Best fit, theta_MAP=' + str(v)
         plt.title(title)
@@ -225,7 +161,6 @@ def map_estimation(config, data, model):
 
 def post_processing(config, model, data, sampler, plot_params):
     # View results
-
 
     samples = sampler.get_chain()
     n_discard = int(config['mcmc_steps'] * 3 / 4)

@@ -52,8 +52,6 @@ def run(load_results = False):
                   'emcee_nwalkers' : 48,
                   'mcmc_steps' : 10000,
                   'data_already_downloaded': False,
-                  'sigma_obs_factor1' : 30,
-                  'sigma_obs_factor2' : 1,
                   'theta0' : theta_initial_guess,
                   'debug' : False,
                   'save_results' : True}

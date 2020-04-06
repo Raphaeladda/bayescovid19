@@ -26,8 +26,9 @@ def log_likelihood(theta, data, model, threshold=5):
 
     # Observations
 
-    y_obs = data['yobs'].values.reshape(-1)
-
+    y_obs     = data['yobs'].values.reshape(-1)
+    sigma_obs = data['sigma'].values.reshape(-1)
+    
     # if number of fatalities < 10 the model is innacurate
     k0 = 0
     while y_obs[k0] < threshold:
@@ -38,7 +39,7 @@ def log_likelihood(theta, data, model, threshold=5):
     y_pred = model.y_from_tobs()
 
     # We use a Poisson likelihood (approximated using a Gaussian distribution)
-    loglik = -1 / 2 * np.sum(1 / y_pred[k0:] * (y_obs[k0:] - y_pred[k0:]) ** 2)
+    loglik = - 1 / 2 * np.sum(1 / sigma_obs[k0:]**2 * (y_obs[k0:] - y_pred[k0:]) ** 2)
     
     return loglik
 

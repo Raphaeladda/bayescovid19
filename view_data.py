@@ -90,6 +90,7 @@ def show(country='France'):
 
         # Visualisation de l'évolution du nombre de décès par jour en France
         dpts_view = ['total'] + dpts_sorted[0:3] # + [dpts_sorted[20], '91', '77', '92']
+        dpts_view = ['total', '33', '75', '68']
 
     else:
         dpts_view = ['total']

@@ -37,6 +37,7 @@ def run(load_results = False):
                                't0' : 25}           # starting day of the epidemic from t0_refdate
 
         config = {'country': 'France',
+                  'region': '75',
                   'N' : 65e6,                     # Population size
                   'Gamma' : 0,                    # Parameter of vital dynamics: births
                   'mu' : 0,                       # Parameter of vital dynamics: Death rate
@@ -50,10 +51,10 @@ def run(load_results = False):
                   'parallel_mcmc'  : run_parallelized,
                   'ncpu' : 4,
                   'emcee_nwalkers' : 48,
-                  'mcmc_steps' : 10000,
+                  'mcmc_steps' : 30000,
                   'data_already_downloaded': False,
                   'theta0' : theta_initial_guess,
-                  'debug' : False,
+                  'debug' : True,
                   'save_results' : True}
 
         # Set params

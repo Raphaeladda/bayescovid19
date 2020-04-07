@@ -53,11 +53,11 @@ def log_prior_SEIRD(theta):
     log10pfatal = theta[3]  # Death proportion for I compartment
     t0 = theta[4]  # Start time
 
-    if R0 < 0 or R0 > 20:
+    if R0 < 0 or R0 > 200:
         return -np.inf
-    elif Tinf < 1 or Tinf > 20:
+    elif Tinf < 1 or Tinf > 200:
         return -np.inf
-    elif Tinc < 1 or Tinc > 20:
+    elif Tinc < 1 or Tinc > 200:
         return -np.inf
     elif log10pfatal < -6 or log10pfatal > -1:
         return -np.inf
@@ -77,13 +77,13 @@ def log_prior_SEIRD_with_cutoff(theta):
     log10pfatal = theta[4]  # Death proportion for I compartment
     t0 = theta[5]  # Start time
 
-    if R0 < 0 or R0 > 200:
+    if R0 < 0 or R0 > 120:
         return -np.inf
     elif beta_cut < 0 or beta_cut > 1:
         return -np.inf
-    elif Tinf < 1 or Tinf > 30:
+    elif Tinf < 1 or Tinf > 90:
         return -np.inf
-    elif Tinc < 1 or Tinc > 10:
+    elif Tinc < 1 or Tinc > 16:
         return -np.inf
     elif log10pfatal < -5 or log10pfatal > -2:
         return -np.inf

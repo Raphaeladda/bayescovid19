@@ -9,7 +9,7 @@ def run(load_results = False):
     
     if load_results:
         # load saved results
-        with open('results_Italy.sav', 'rb') as results_file:
+        with open('results_France_gdest.sav', 'rb') as results_file:
             results = pickle.load(results_file)
 
         config = results['config']
@@ -26,18 +26,19 @@ def run(load_results = False):
             sys.exit('Please, replace "if True:" by "if __name__ == "__main__":"')
 
         t0_refdate = datetime.date(2020, 1, 1)    # reference date
-        cutoff_time = (datetime.date(2020, 3, 11) - t0_refdate).days
+        cutoff_time = (datetime.date(2020, 3, 18) - t0_refdate).days
         lift_time = (datetime.date(2020, 8, 1) - t0_refdate).days
 
-        theta_initial_guess = {'R0' : 10.7,         # Basic Reproduction Rate
+        theta_initial_guess = {'R0' : 11,         # Basic Reproduction Rate
                                'beta_cut' : 0.45,   # Beta cut with lockdown
-                               'Tinf' : 15,         # Infection Time
-                               'Tinc' : 3.5,        # Incubation Time
+                               'Tinf' : 10,         # Infection Time
+                               'Tinc' : 4.5,        # Incubation Time
                                'pfatal' : 0.0005,   # Death proportion for I compartment
-                               't0' : 16}           # starting day of the epidemic from t0_refdate
+                               't0' : 25}           # starting day of the epidemic from t0_refdate
 
-        config = {'country': 'Italy',
-                  'N' : 60e6,                     # Population size
+        config = {'country': 'France',
+                  'regions': ['08', '10', '51', '52', '54', '55', '57', '67', '68', '88'],
+                  'N' : 5.55e6,                    # Population size
                   'Gamma' : 0,                    # Parameter of vital dynamics: births
                   'mu' : 0,                       # Parameter of vital dynamics: Death rate
                   't0_refdate' : t0_refdate,
@@ -50,10 +51,10 @@ def run(load_results = False):
                   'parallel_mcmc'  : run_parallelized,
                   'ncpu' : 20,
                   'emcee_nwalkers' : 48,
-                  'mcmc_steps' : 40000,
+                  'mcmc_steps' : 10000,
                   'data_already_downloaded': False,
                   'theta0' : theta_initial_guess,
-                  'debug' : False,
+                  'debug' : True,
                   'save_results' : True}
 
         # Set params
@@ -66,7 +67,7 @@ def run(load_results = False):
         if config['save_results']:
             results = {'config':config, 'model':model, 'data': data, 'sampler':sampler}
 
-            with open('results_Italy.sav', 'wb') as results_file:
+            with open('results_France_gdest.sav', 'wb') as results_file:
                 pickle.dump(results, results_file)
 
     return config, model, data, sampler

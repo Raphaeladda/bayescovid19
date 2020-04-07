@@ -47,7 +47,12 @@ def get_data(config):
 
     df_fatalities = get_fatalities(config['country'], reuse=config['data_already_downloaded'])
 
-    data = df_fatalities[['date', 'total']].copy()
+    if 'regions' in config and config['regions']:
+        total = df_fatalities[ config['regions'] ].sum(axis = 1)
+        data = df_fatalities[['date', 'total']].copy()
+        data['total'] = total
+    else:
+        data = df_fatalities[['date', 'total']].copy()
     data.columns = ['tobs', 'yobs']
 
     return data
@@ -330,9 +335,10 @@ def show_predictions(config, model, data, theta_post, plot_params):
         # model.set_regional_params(config)
         model.simulate(theta_post[i, :])
         if plot_params['show_inf'] == True:
-            plt.plot(model.t, model.x[:, 2], color='C2', alpha=0.2)
+            plt.plot(model.t, model.x[:, 4], color='C0', alpha=0.2)
         if plot_params['show_fat'] == True:
-            plt.plot(model.t, model.x[:, 4], color='C0', alpha=0.5)
+            plt.plot(model.t, model.x[:, 0], color='C0', alpha=0.2)
+            plt.plot(model.t, model.x[:, 2], color='C2', alpha=0.5)
 
     if plot_params['show_posterior_mean'] and plot_params['show_inf'] == True:
         plt.plot(model.t, n_inf1_posterior_mean, label='Prediction', color='C6', alpha=1)

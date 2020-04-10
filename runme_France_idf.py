@@ -3,6 +3,8 @@ import sys
 import datetime
 import pickle
 import bayescovid19.theta_sampling as thsa
+import bayescovid19.post_processing as pp
+
 
 def run(load_results = False):
     # run everything
@@ -49,9 +51,9 @@ def run(load_results = False):
                   'sim_duration' : 250,           # simulation duration
                   'sim_step' : 1e-1,
                   'parallel_mcmc'  : run_parallelized,
-                  'ncpu' : 2,
+                  'ncpu' : 20,
                   'emcee_nwalkers' : 48,
-                  'mcmc_steps' : 50000,
+                  'mcmc_steps' : 30000,
                   'data_already_downloaded': False,
                   'theta0' : theta_initial_guess,
                   'debug' : False,
@@ -85,5 +87,5 @@ if __name__ == '__main__':
                    'show_fat': True,
                    'semilogy': True}
     
-    thsa.post_processing(config, model, data, sampler, plot_params)
+    pp.post_processing(config, model, data, sampler, plot_params)
 

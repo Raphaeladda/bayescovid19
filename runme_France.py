@@ -3,6 +3,8 @@ import sys
 import datetime
 import pickle
 import bayescovid19.theta_sampling as thsa
+import bayescovid19.post_processing as pp
+
 
 def run(load_results = False):
     # run everything
@@ -37,7 +39,6 @@ def run(load_results = False):
                                't0' : 25}           # starting day of the epidemic from t0_refdate
 
         config = {'country': 'France',
-                  'region': '75',
                   'N' : 65e6,                     # Population size
                   'Gamma' : 0,                    # Parameter of vital dynamics: births
                   'mu' : 0,                       # Parameter of vital dynamics: Death rate
@@ -54,7 +55,7 @@ def run(load_results = False):
                   'mcmc_steps' : 30000,
                   'data_already_downloaded': False,
                   'theta0' : theta_initial_guess,
-                  'debug' : True,
+                  'debug' : False,
                   'save_results' : True}
 
         # Set params
@@ -85,5 +86,5 @@ if __name__ == '__main__':
                    'show_fat': True,
                    'semilogy': True}
     
-    thsa.post_processing(config, model, data, sampler, plot_params)
+    pp.post_processing(config, model, data, sampler, plot_params)
 

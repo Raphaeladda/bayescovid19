@@ -131,7 +131,7 @@ def show_predictions(config, model, data, theta_post, plot_params):
     # Compute posterior means?
     if plot_params['show_posterior_mean'] == True:
         traj_base_stats, traj_nolockdown_stats, traj_rmlockdown_stats = posterior_trajectories(
-            config, model, data, theta_post, 100)
+            config, model, data, theta_post, 400)
     # display
 
     # Setting plot parameters
@@ -164,7 +164,7 @@ def show_predictions(config, model, data, theta_post, plot_params):
     pop_sz = model.regional_params[0]
 
     ## Cumulated cases
-    if plot_params['show_posterior_mean']:
+    if plot_params['show_posterior_mean'] and plot_params['show_inf'] == True:
         plt.plot(t,
                  pop_sz - traj_nolockdown_stats['mean'][:, model.state_ref['S']],
                  linestyle='dashed', color='C2', alpha=1)

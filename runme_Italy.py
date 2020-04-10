@@ -52,7 +52,7 @@ def run(load_results = False):
                   'parallel_mcmc'  : run_parallelized,
                   'ncpu' : 20,
                   'emcee_nwalkers' : 48,
-                  'mcmc_steps' : 2000,
+                  'mcmc_steps' : 30000,
                   'data_already_downloaded': False,
                   'theta0' : theta_initial_guess,
                   'debug' : False,

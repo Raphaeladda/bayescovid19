@@ -110,6 +110,51 @@ def SEIRD_with_cutoff(t, x, theta, const_params):
     return dx
 
 
+def SIRD_with_cutoff(t, x, theta, const_params):
+    # Computes...
+    # 
+    # Inputs:
+    #   t
+    #   x
+    #   theta = [R, beta_cut, T_inf, T_inc , pfatal]
+    #   ...
+    # Output:
+    #   dx
+    # ...
+    # ...
+
+    R0 = theta[0]               # Basic Reproduction Rate
+    beta_cut = theta[1]         
+    Tinf = theta[2]             # Infection Time
+    pfatal = pow(10, theta[3])  # Death proportion for I compartment
+
+    N = const_params[0]
+    Gamma = const_params[1]
+    mu = const_params[2]
+    cutoff_time = const_params[3]
+    lift_time = const_params[4]
+
+    S = x[0]
+    I = x[1]
+    R = x[2]
+    D = x[3]
+
+    gamma = 1 / Tinf
+    if t >= cutoff_time and t < lift_time:
+        beta = beta_cut * gamma * R0
+    else:
+        beta = gamma * R0
+
+    dS = Gamma - mu * S - beta / N * I * S
+    dI = beta / N * I * S - mu * I - gamma * (1 + pfatal) * I
+    dR = gamma * I - mu * R
+    dD = gamma * pfatal * I
+
+    dx = [dS, dI, dR, dD]
+
+    return dx
+
+
 class model:
     '''
     Attributes
@@ -148,21 +193,38 @@ class model:
         if self.model_type == 'SEIRD':
             self.f = SEIRD
             self.state_dim = 5  # state dim
+            self.state_ref = {'S': 0, 'E':1, 'I':2, 'R':3, 'D':4}
             self.theta_dim = 5  # theta dim
+ 
 
         elif self.model_type == 'SEIRD_with_cutoff':
             self.f = SEIRD_with_cutoff
             self.state_dim = 5  # state dim
+            self.state_ref = {'S': 0, 'E':1, 'I':2, 'R':3, 'D':4}
             self.theta_dim = 6  # theta dim
+
+        elif self.model_type == 'SIRD_with_cutoff':
+            self.f = SIRD_with_cutoff
+            self.state_dim = 4  # state dim
+            self.state_ref = {'S': 0, 'I':1, 'R':2, 'D':3}
+            self.theta_dim = 5  # theta dim
+
         else:
             raise('model type is not implemented')
         
         
     def set_regional_params(self, config):
         # Regional parameters
+
         if self.model_type == 'SEIRD':
             self.regional_params = [config['N'], config['Gamma'], config['mu']]
+            
         elif self.model_type == 'SEIRD_with_cutoff':
+            self.regional_params = [config['N'], config['Gamma'], config['mu'],
+                                    config['cutoff_time'],
+                                    config['lift_time']]
+            
+        elif self.model_type == 'SIRD_with_cutoff':
             self.regional_params = [config['N'], config['Gamma'], config['mu'],
                                     config['cutoff_time'],
                                     config['lift_time']]
@@ -170,12 +232,14 @@ class model:
             
     def set_simulation_params(self, config):
         # Simulation parameters
+
         self.time_step = config['sim_step']
         self.sim_duration = config['sim_duration']
 
 
     def prepare_simulations(self, config, tobs):
         # build t and preallocate x        
+
         self.t = np.arange(0, self.sim_duration, self.time_step)
         self.x = np.zeros([self.t.shape[0], self.state_dim])  # preallocation
 
@@ -201,7 +265,8 @@ class model:
 
     def y_from_tobs(self):
         # Helper function to retrieve fatalities at tobs
-        fatalities_idx = 4
+
+        fatalities_idx = self.state_ref['D']
         return self.x[self.tobs_idx, fatalities_idx]
 
     def simulate(self, theta):
@@ -212,7 +277,10 @@ class model:
 
         # State initialization
         t0 = theta[-1]
-        x0 = [self.regional_params[0] - 1, 0, 1, 0, 0]
+        if self.model_type in ['SEIRD', 'SEIRD_with_cutoff']:
+            x0 = [self.regional_params[0] - 1, 0, 1, 0, 0]
+        elif self.model_type == 'SIRD_with_cutoff':
+            x0 = [self.regional_params[0] - 1, 1, 0, 0]
 
         # ODE initialization
         # r = ode(f).set_integrator('vode', method='adams', with_jacobian=False)
@@ -233,17 +301,18 @@ class model:
 
     def plot(self, semilog=True):
         # Simple plot
+
         if semilog:
-            plt.semilogy(self.t, self.x[:, 0], label="Susceptible")
-            plt.semilogy(self.t, self.x[:, 1], label="Exposed")
-            plt.semilogy(self.t, self.x[:, 2], label="Infectious")
-            plt.semilogy(self.t, self.x[:, 3], label="Recovered")
-            plt.semilogy(self.t, self.x[:, 4], label="Death")
-            plt.ylim((0.1, np.max(self.x[:, 0])))
+            plt.semilogy(self.t, self.x[:, self.state_ref['S']], label="Susceptible")
+            plt.semilogy(self.t, self.x[:, self.state_ref['E']], label="Exposed")
+            plt.semilogy(self.t, self.x[:, self.state_ref['I']], label="Infectious")
+            plt.semilogy(self.t, self.x[:, self.state_ref['R']], label="Recovered")
+            plt.semilogy(self.t, self.x[:, self.state_ref['D']], label="Death")
+            plt.ylim((0.1, np.max(self.x[:, self.state_ref['S']])))
         else:
-            plt.plot(self.t, self.x[:, 1], label="Exposed")
-            plt.plot(self.t, self.x[:, 2], label="Infectious")
-            plt.plot(self.t, self.x[:, 4], label="Death")
+            plt.plot(self.t, self.x[:, self.state_ref['E']], label="Exposed")
+            plt.plot(self.t, self.x[:, self.state_ref['I']], label="Infectious")
+            plt.plot(self.t, self.x[:, self.state_ref['D']], label="Death")
 
         plt.title("Propagation model SEIR(D)")
         plt.grid(True)
@@ -253,6 +322,7 @@ class model:
 
     def plot_with_obs(self, yobs, ax=None, transparency=1):
         # Simple plot
+
         if ax is None:
             fig, ax = plt.subplots()
             plt.xlabel('Time (days)')
@@ -264,7 +334,7 @@ class model:
         yobs = yobs[idx[0]]
 
         # pdb.set_trace()
-        plt.semilogy(self.t, self.x[:, 2], label='Prediction', color='C4', alpha=transparency / 2)
-        plt.semilogy(self.t, self.x[:, 4], label='Prediction', color='C7', alpha=transparency)
+        plt.semilogy(self.t, self.x[:, self.state_ref['I']], label='Prediction', color='C4', alpha=transparency / 2)
+        plt.semilogy(self.t, self.x[:, self.state_ref['D']], label='Prediction', color='C7', alpha=transparency)
         plt.semilogy(tobs, yobs, label='Observed', linestyle='dashed', marker='o', color='C1')
         return ax

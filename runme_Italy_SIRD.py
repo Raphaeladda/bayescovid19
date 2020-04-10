@@ -3,15 +3,13 @@ import sys
 import datetime
 import pickle
 import bayescovid19.theta_sampling as thsa
-import bayescovid19.post_processing as pp
-
 
 def run(load_results = False):
     # run everything
     
     if load_results:
         # load saved results
-        with open('results_Italy.sav', 'rb') as results_file:
+        with open('results_Italy_SIRD.sav', 'rb') as results_file:
             results = pickle.load(results_file)
 
         config = results['config']
@@ -34,7 +32,6 @@ def run(load_results = False):
         theta_initial_guess = {'R0' : 10.7,         # Basic Reproduction Rate
                                'beta_cut' : 0.45,   # Beta cut with lockdown
                                'Tinf' : 15,         # Infection Time
-                               'Tinc' : 3.5,        # Incubation Time
                                'pfatal' : 0.0005,   # Death proportion for I compartment
                                't0' : 16}           # starting day of the epidemic from t0_refdate
 
@@ -45,14 +42,14 @@ def run(load_results = False):
                   't0_refdate' : t0_refdate,
                   'cutoff_time' : cutoff_time,
                   'lift_time' : lift_time,
-                  'model_type' : 'SEIRD_with_cutoff',  # model_type
+                  'model_type' : 'SIRD_with_cutoff',  # model_type
                   'fatalities_treshold' : 5,      # fatalities treshold
                   'sim_duration' : 250,           # simulation duration
                   'sim_step' : 1e-1,
                   'parallel_mcmc'  : run_parallelized,
                   'ncpu' : 20,
                   'emcee_nwalkers' : 48,
-                  'mcmc_steps' : 2000,
+                  'mcmc_steps' : 20000,
                   'data_already_downloaded': False,
                   'theta0' : theta_initial_guess,
                   'debug' : False,
@@ -68,7 +65,7 @@ def run(load_results = False):
         if config['save_results']:
             results = {'config':config, 'model':model, 'data': data, 'sampler':sampler}
 
-            with open('results_Italy.sav', 'wb') as results_file:
+            with open('results_Italy_SIRD.sav', 'wb') as results_file:
                 pickle.dump(results, results_file)
 
     return config, model, data, sampler
@@ -86,5 +83,5 @@ if __name__ == '__main__':
                    'show_fat': True,
                    'semilogy': True}
     
-    pp.post_processing(config, model, data, sampler, plot_params)
+    thsa.post_processing(config, model, data, sampler, plot_params)
 

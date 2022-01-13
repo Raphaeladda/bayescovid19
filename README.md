@@ -1,3 +1,7 @@
+Project imported from https://gitlab-research.centralesupelec.fr/datasc_projects_public/bayescovid19.
+Realized by CentraleSupelec students Raphael Adda, Maxime Charpentier, Nathan Fouqueray and Prof. Emmanuel Vazquez during the Spring 2020.  
+
+
 # bayescovid19
 
 Modeling the propagation of the SARS-Cov-2 using a SEIRD model and a Bayesian approach
